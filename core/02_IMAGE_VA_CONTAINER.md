@@ -50,8 +50,14 @@ Một image thường có tên dạng `tên:tag`, ví dụ `node:18`, `nginx:lat
 ## Kiểm tra nhanh
 
 1. Một image có thể tạo ra bao nhiêu container? Việc sửa dữ liệu trong một container có ảnh hưởng container khác cùng image không?
+-> 1 image có thể tạo ra nhiều container, việc sửa dữ liệu trong 1 container không ảnh hưởng gì đến image, vì image chỉ có trách nhiệm tạo ra instance container
+-> **AI Review:** Đúng hướng nhưng trả lời chưa đầy đủ. Câu hỏi gồm hai phần: (1) một image tạo được bao nhiêu container — bạn trả lời đúng: **nhiều container** (không giới hạn). (2) sửa dữ liệu trong container A có ảnh hưởng container B cùng image không — bạn chỉ nói "không ảnh hưởng đến image" mà chưa trả lời thẳng phần này. Đáp án đầy đủ: **Không ảnh hưởng container khác**, vì mỗi container có **lớp ghi riêng (writable layer)** độc lập; thay đổi chỉ nằm trong lớp ghi của container đó, không lan sang container khác và cũng không thay đổi image gốc (read-only). Ngoài ra, nói "image chỉ có trách nhiệm tạo ra instance container" hơi thiếu chính xác — image là **template bất biến (immutable)** chứa filesystem và metadata; Docker Engine mới là thứ tạo container từ image.
 2. Vì sao chia image thành nhiều layer lại giúp build nhanh hơn?
+-> Vì khi có nhiều layer, docker có cơ chế cache, tức không chạy lại từ đầu các layer không bị thay đổi
+-> **AI Review:** Chính xác! Đây là ý cốt lõi: Docker cache từng layer và chỉ build lại từ layer đầu tiên bị thay đổi trở đi. Bổ sung thêm: ngoài tăng tốc build, việc chia layer còn giúp **tiết kiệm dung lượng lưu trữ và băng thông** — nhiều image có thể **chia sẻ chung các layer giống nhau** (ví dụ cùng dùng base image `ubuntu:22.04` thì layer đó chỉ lưu một lần trên đĩa). Thuật ngữ kỹ thuật liên quan là **content-addressable storage** — mỗi layer được định danh bằng hash của nội dung.
 3. Nếu bạn `docker run` một image ba lần, bạn có ba container hay một? Giải thích bằng ẩn dụ khuôn đúc.
+-> Tôi sẽ có 3 container, vì image là bất biến, chạy một lần sẽ tạo ra 1 container độc lập riêng, image giống như khuôn bánh trưng, có thể tạo ra nhiều cái bánh, mỗi cái bánh là độc lập không liên quan đến nhau chỉ giống nhau về hình dáng
+-> **AI Review:** Hoàn toàn chính xác! Ba lần `docker run` = ba container riêng biệt, mỗi container có lớp ghi (writable layer) riêng. Ẩn dụ khuôn bánh rất đúng tinh thần bài học. Một điểm nhỏ về từ ngữ: bạn viết "khuôn bánh trưng" — có lẽ ý bạn là "khuôn bánh trung thu"? Nếu vậy thì ẩn dụ rất hay: một khuôn bánh trung thu đúc ra nhiều cái bánh giống hệt nhau về hình dáng, nhưng mỗi cái bánh tồn tại độc lập — ăn (xóa) cái này không ảnh hưởng cái kia, và khuôn (image) vẫn còn nguyên.
 
 ## DỪNG TẠI ĐÂY
 
