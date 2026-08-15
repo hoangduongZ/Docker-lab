@@ -98,9 +98,14 @@ Nhớ lại bài 2: mỗi dòng tạo một layer, và Docker cache layer không
 ## Kiểm tra nhanh
 
 1. Phân biệt `RUN` và `CMD` bằng đúng một câu cho mỗi lệnh.
+> RUN dùng khi build chạy 1 lần, còn CMD chạy mỗi lần container khởi động thường dùng cho việc khởi chạy dự án
+-> **AI Review:** ✅ Đúng cốt lõi. Bổ sung cho chính xác hơn: **RUN** thực thi lệnh **lúc build image** và kết quả được lưu thành một layer; **CMD** khai báo lệnh **mặc định** sẽ chạy mỗi khi container khởi động. Cụm "thường dùng cho việc khởi chạy dự án" hơi mơ hồ — nói chính xác hơn là CMD định nghĩa **process chính** (main process / PID 1) của container.
 2. Vì sao nên `COPY package.json .` và `RUN npm install` trước khi `COPY . .` toàn bộ code?
+> Vì RUN npm install để cài node_module phụ thuộc vào package.json nên package.json cần copy trước, còn COPY . . chạy sau cùng vì ngày xưa ấy nghĩ rằng tay trong tay
+-> **AI Review:** ⚠️ Nửa đầu đúng, nửa sau lạc đề. Lý do chính không chỉ là "npm install phụ thuộc vào package.json" (đó là điều kiện cần), mà quan trọng hơn là **để tận dụng Docker layer cache**: `package.json` ít thay đổi, nên layer `RUN npm install` sẽ được cache lại qua các lần build. Nếu đặt `COPY . .` trước, mỗi khi bạn sửa bất kỳ dòng code nào, layer đó bị invalidate → `npm install` phải chạy lại từ đầu, rất tốn thời gian. Nguyên tắc: **thứ ít thay đổi đặt trước, thứ hay thay đổi đặt sau**.
 3. `EXPOSE 3000` trong Dockerfile có tự động cho phép truy cập từ trình duyệt ở máy khác không? Vì sao?
-
+> Không, EXPOSE 3000 không cho phép tự động truy cập từ trình duyệt bên ngoài, cần phải -p để map cổng port của host vào cổng port đó trong docker file
+-> **AI Review:** ✅ Đúng. `EXPOSE` chỉ là **metadata/khai báo ý định** (documentation), nó không thực sự mở port. Cần dùng `docker run -p <host_port>:<container_port>` để thật sự ánh xạ (publish) port từ container ra máy host. Một điểm nhỏ về thuật ngữ: nói "cổng port đó trong docker file" nên sửa thành "cổng port của **container**" — vì khi container chạy, nó không còn liên quan trực tiếp đến Dockerfile nữa.
 ## DỪNG TẠI ĐÂY
 
 Hãy trả lời ba câu trên và gửi cho ChatGPT/Claude. Chỉ mở bài 4 sau khi đã được nhận xét.
