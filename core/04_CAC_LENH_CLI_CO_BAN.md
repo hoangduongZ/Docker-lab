@@ -65,9 +65,14 @@ docker exec -it web sh
 ## Kiểm tra nhanh
 
 1. Phân biệt `docker stop` và `docker rm` bằng một câu cho mỗi lệnh.
+> docker stop là tạm dừng container đang chạy, còn docker rm là gỡ hẳn container, nếu không lưu trữ volumn thì mất luôn dữ liệu
+-> **AI Review:** Đúng ý chính. Hai điểm nhỏ cần sửa: (1) chính tả đúng là **volume**, không phải "volumn"; (2) nên nhấn mạnh rằng `docker stop` chỉ dừng tiến trình — container và dữ liệu trong writable layer **vẫn còn nguyên**, có thể `docker start` lại bất cứ lúc nào. Còn `docker rm` mới thực sự xóa container cùng writable layer đó.
 2. Bạn muốn xem log của một container đang chạy để tìm lỗi. Dùng lệnh nào?
+> Tao dùng docker logs <container-name>
+-> **AI Review:** Đúng. `docker logs <container-name>` là lệnh chính xác. Bổ sung: có thể thêm cờ `-f` (`docker logs -f`) để theo dõi log realtime (giống `tail -f`), rất hữu ích khi debug lỗi đang phát sinh.
 3. Lệnh `docker exec -it ten-container sh` dùng để làm gì, và vì sao cần `-it`?
-
+> Lệnh này để tương tác thật với hệ thống thư mục của container đó.`
+-> **AI Review:** Đúng một phần, nhưng thiếu. Câu trả lời chỉ nói "tương tác với hệ thống thư mục" — thực tế `docker exec -it <container> sh` mở một **shell session bên trong container đang chạy**, cho phép bạn làm mọi thứ (chạy lệnh, xem log, kiểm tra process, debug…), không chỉ duyệt file. Phần thứ hai của câu hỏi — **vì sao cần `-it`** — bạn chưa trả lời. `-i` (interactive) giữ stdin mở để bạn gõ lệnh vào, `-t` (tty) cấp một pseudo-terminal để hiển thị output đúng định dạng. Thiếu một trong hai thì shell sẽ không hoạt động đúng cách.
 ## DỪNG TẠI ĐÂY
 
 Hãy trả lời ba câu trên và gửi cho ChatGPT/Claude. Chỉ mở bài 5 sau khi đã được nhận xét.
