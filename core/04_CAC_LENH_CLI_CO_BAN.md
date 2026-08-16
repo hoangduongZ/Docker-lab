@@ -76,3 +76,124 @@ docker exec -it web sh
 ## DỪNG TẠI ĐÂY
 
 Hãy trả lời ba câu trên và gửi cho ChatGPT/Claude. Chỉ mở bài 5 sau khi đã được nhận xét.
+
+---
+
+## 🧪 Thực hành — Tự tay, tự mắt, tự giải thích
+
+> Nguyên tắc Feynman: nếu bạn không thể giải thích đơn giản thì bạn chưa hiểu. Mỗi bài dưới đây yêu cầu bạn **chạy lệnh thật**, **quan sát output**, rồi **viết giải thích bằng lời của mình** vào chỗ trống.
+
+### Bài tập 1 — Vòng đời một container
+
+Chạy lần lượt từng lệnh dưới đây. Sau mỗi bước, ghi lại bạn thấy gì.
+
+```bash
+# Bước 1: Tạo và chạy container từ image nginx, đặt tên là "thu-nghiem"
+docker run -d --name thu-nghiem nginx
+
+# Bước 2: Xác nhận container đang chạy
+docker ps
+```
+
+> Ghi lại: bạn thấy container "thu-nghiem" ở trạng thái gì?
+> Có thấy đang ở trạng thái running, nhưng không chỉ định port thì forward port như thế nào ?
+-> **AI Review:** Quan sát đúng — container ở trạng thái `Up`. Câu hỏi thêm của bạn rất hay: khi không có `-p`, container **vẫn chạy bình thường bên trong**, nginx vẫn lắng nghe port 80 trong mạng nội bộ của container, nhưng **không có cổng nào được map ra máy host**, nên bạn không thể truy cập từ trình duyệt. Muốn truy cập được phải thêm `-p`, ví dụ `-p 8080:80`. Chi tiết sẽ được học kỹ ở bài 6.
+
+```bash
+# Bước 3: Dừng container
+docker stop thu-nghiem
+
+# Bước 4: Kiểm tra lại
+docker ps
+docker ps -a
+```
+
+> `docker ps` còn thấy "thu-nghiem" không? `docker ps -a` thì sao? Giải thích vì sao hai lệnh cho kết quả khác nhau.
+> Không còn thấy thu-nghiem tại trạng thái running, docker ps -a thì vẫn còn vì nó bao gồm tất cả container bao gồm cả đang không running
+-> **AI Review:** Chính xác. `docker ps` chỉ hiện container có status `Up` (đang chạy). `docker ps -a` hiện **tất cả** container bao gồm cả status `Exited` (đã dừng). Container sau khi `stop` vẫn tồn tại trên máy, chỉ là tiến trình bên trong không còn chạy.
+
+```bash
+# Bước 5: Khởi động lại container đã dừng
+docker start thu-nghiem
+docker ps
+```
+
+> Container có tạo mới không, hay là cái cũ sống lại? Làm sao bạn biết?
+> Container không tạo mới, cái cũ running lại, vì trước đó nó còn ở docker ps -a trạng thái đang dừng hoạt động, nó start lại nó lại quay lại trạng thái running
+-> **AI Review:** Đúng hoàn toàn. `docker start` khởi động lại container **đã tồn tại** — cùng Container ID, cùng tên, cùng dữ liệu trong writable layer. Cách xác nhận dễ nhất: so sánh **CONTAINER ID** trước khi stop và sau khi start — nếu trùng nhau thì chắc chắn là cùng một container. Đây là điểm khác biệt quan trọng so với `docker run` (luôn tạo container mới).
+
+```bash
+# Bước 6: Dọn dẹp
+docker stop thu-nghiem
+docker rm thu-nghiem
+docker ps -a
+```
+
+> Sau `docker rm`, chạy `docker ps -a` có còn thấy "thu-nghiem" không? So sánh với bước 4.
+> Tôi không còn thấy thử nghiệm, vì container thu-nghiem đã bị xoá khỏi docker container
+-> **AI Review:** Chính xác. Sau `docker rm`, container biến mất hoàn toàn khỏi cả `docker ps` lẫn `docker ps -a`. So với bước 4 (chỉ `stop`): ở bước 4 container vẫn còn trong `docker ps -a` với trạng thái `Exited`, còn ở đây nó đã bị xóa sạch — đây chính là sự khác biệt cốt lõi giữa `stop` và `rm`.
+
+### Bài tập 2 — `docker run` tạo container mới mỗi lần
+
+```bash
+docker run -d nginx
+docker run -d nginx
+docker run -d nginx
+docker ps
+```
+
+> Bạn thấy bao nhiêu container đang chạy? Chúng có cùng tên không? Giải thích vì sao `docker run` 3 lần tạo ra 3 container riêng biệt từ cùng một image.
+> tôi thấy 3 contaiiner của nginx đang chạy với 3 tên container khác nhau, có vẻ khi không chỉ định --name cho container mặc định nó sẽ sinh tên container ngẫu nhiên, còn việc nó sinh ra 3 container riêng biệt vì image là bất biến là khuôn mẫu sinh ra 3 container độc lập về môi trường không chạm tới nhau
+-> **AI Review:** Rất tốt — nắm được cả 3 ý quan trọng: (1) không có `--name` thì Docker tự sinh tên ngẫu nhiên (dạng `tính_từ_tên_người`, ví dụ `happy_einstein`); (2) image là bất biến, chỉ đọc; (3) mỗi container có writable layer và namespace riêng, hoàn toàn độc lập. Lưu ý nhỏ: chính tả "contaiiner" → **container**.
+
+```bash
+# Dọn dẹp: dừng và xóa tất cả container vừa tạo
+docker stop $(docker ps -q)
+docker rm $(docker ps -aq)
+```
+
+### Bài tập 3 — Chui vào bên trong container
+
+```bash
+docker run -d --name hop-den nginx
+docker exec -it hop-den sh
+```
+
+Khi đã ở bên trong container, thử chạy:
+
+```bash
+ls /
+hostname
+cat /etc/os-release
+exit
+```
+
+> Hệ điều hành bên trong container có giống máy Mac của bạn không? `hostname` trả về gì? Giải thích bằng lời của bạn: vì sao bên trong container là một "thế giới" riêng.
+> Hệ điều hành bên trong container không giống máy mac bên trong container là Linux 13 Debian | Hostname trả về id của container | Bên trong container là 1 thế giới riêng vì nó sinh ra để độc lập môi trường phục vụ cho app hiện tại, nhưng nó vẫn dùng chung kernel với mac của tôi
+-> **AI Review:** Phần quan sát rất tốt — đúng là bên trong là Debian Linux, hostname là Container ID. Giải thích "thế giới riêng" cũng đúng hướng. Tuy nhiên có **một điểm cần sửa quan trọng**: trên macOS, container **không dùng chung kernel với Mac**. macOS dùng kernel Darwin (không phải Linux), nên Docker Desktop tạo một **máy ảo Linux nhẹ** (LinuxKit VM) chạy ngầm, và các container dùng chung kernel Linux của VM đó. Nói cách khác: Mac → VM Linux → container dùng chung kernel Linux của VM. Trên máy Linux thật thì mới đúng là container dùng chung kernel trực tiếp với host.
+
+```bash
+# Dọn dẹp
+docker stop hop-den && docker rm hop-den
+```
+
+### Bài tập 4 — Xóa container không ảnh hưởng image
+
+```bash
+docker images | grep nginx
+docker run -d --name tam-thoi nginx
+docker rm -f tam-thoi
+docker images | grep nginx
+```
+
+> Image `nginx` có bị xóa theo container không? Giải thích mối quan hệ giữa image và container bằng một câu đơn giản nhất bạn có thể nghĩ ra.
+> 2 môi trường của image và container không liên quan đến nhau, nên khi xoá container không ảnh hưởng đến image nginx? nginx image là khuôn để sinh ra nhiều container
+-> **AI Review:** Ý đúng, nhưng cách diễn đạt "không liên quan đến nhau" hơi quá — thực ra image và container **có liên quan**: container được tạo **từ** image (các read-only layer của image là nền tảng của container). Chính xác hơn nên nói: image là **nguồn gốc** (bản thiết kế), container là **sản phẩm** được sinh ra từ đó. Xóa sản phẩm không ảnh hưởng bản thiết kế — đó là lý do `docker rm` container mà image vẫn còn nguyên. Câu cuối "nginx image là khuôn để sinh ra nhiều container" — rất chuẩn.
+
+### Bài tập 5 — Feynman cuối cùng: dạy lại
+
+Tưởng tượng một người bạn chưa biết gì về Docker hỏi bạn: *"Docker có mấy lệnh cơ bản? Chúng khác nhau chỗ nào?"*
+
+> Viết câu trả lời của bạn ở đây, dùng ngôn ngữ đời thường, không copy bài học. Nếu viết được dưới 5 câu mà người bạn hiểu — bạn đã nắm vững bài này.
+> Docker có nhiều lệnh cơ bản, loanh quanh về đọc, chạy, xoá, dừng, tương tác terminal bên trong container, trong đầu cứ nhớ thành 2 khối images và container xong rồi nhớ tới lệnh đọc, chạy, xoá ... tương ứng của nó là gì, 1 image có thể sinh ra nhiều container, container thì khác với image nó là instance sinh ra từ image nó sẽ có thêm trạng thái running, stop như 1 thực thể có các hành động, về image thì nó là bản vẽ bất biến, nó có tự build image hoặc kéo image đã được tạo sẵn trên docker hub
+-> **AI Review:** Nắm được ý cốt lõi và cách chia 2 nhóm (image vs container) rất đúng tư duy. Một vài góp ý để câu trả lời sắc hơn: (1) Hơi dài — thử rút gọn, ví dụ: *"Lệnh Docker chia 2 nhóm: nhóm image (build, pull, images, rmi) và nhóm container (run, ps, stop, start, rm, logs, exec). Image là bản thiết kế bất biến, mỗi lần `run` sinh ra một container mới — một instance đang sống có trạng thái riêng."* — 3 câu, người bạn sẽ hiểu ngay. (2) Bạn dùng từ "instance" rất chuẩn — đó đúng là thuật ngữ chuyên môn cho mối quan hệ image↔container. (3) Điểm hay: bạn nhắc được cả `build` lẫn `pull` — hai cách có image. Tổng thể: **đạt** — bạn đã hiểu bài này.
