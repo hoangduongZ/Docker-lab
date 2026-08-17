@@ -98,7 +98,7 @@ docker exec db-khong-volume cat /tmp/ghi-chu.txt
 ```
 
 > Bạn thấy nội dung gì? File đang nằm ở đâu (trong container hay trên máy host)?
->
+> File đang trên container
 
 ```bash
 # Bước 3: Xóa container
@@ -110,7 +110,7 @@ docker exec db-khong-volume cat /tmp/ghi-chu.txt
 ```
 
 > Lệnh cuối có báo lỗi không? File `ghi-chu.txt` đã đi đâu? Giải thích bằng khái niệm writable layer.
->
+> Container khi bị remove đi sẽ đồng thời xoá đi writable layer, ghi-chu.txt nằm trong layer này nên sẽ bị xoá đi
 
 ```bash
 # Dọn dẹp
@@ -132,7 +132,7 @@ docker exec db-co-volume cat /du-lieu/ghi-chu.txt
 ```
 
 > File này đang được lưu ở volume hay writable layer? Làm sao bạn phân biệt?
->
+> File này đang được lưu ở volume. vì tôi nhớ đã mapping volume đó vào thư mục trong container, hoặc tôi xoá đi map lại vẫn còn dữ liệu
 
 ```bash
 # Bước 3: Xóa container, tạo container MỚI gắn lại cùng volume
@@ -142,7 +142,7 @@ docker exec db-moi cat /du-lieu/ghi-chu.txt
 ```
 
 > Dữ liệu còn không? So sánh với bài tập 1, bước 4. Giải thích vì sao kết quả khác nhau.
->
+> Dữ liệu còn. cái trước không có volume để lưu dữ liệu ra ngoài, còn cái này có
 
 ```bash
 # Dọn dẹp
@@ -169,7 +169,7 @@ docker exec live-sync cat /app/hello.txt
 ```
 
 > Container có thấy file bạn vừa tạo trên máy host không? Bạn không hề copy gì vào container — vậy tại sao nó thấy được?
->
+> vẫn thấy trong container, tôi đang hiểu, là nó vừa lưu vào container vừa lưu vào volume, hoặc là nó link cái gì đó chỉ lưu vào volume khi truy cập từ container nó trỏ sang volume
 
 ```bash
 # Bước 5: Tạo file TỪ TRONG CONTAINER
@@ -180,7 +180,7 @@ cat /tmp/docker-lab-test/phan-hoi.txt
 ```
 
 > Chiều ngược lại có hoạt động không? Giải thích bind mount hoạt động theo chiều nào: một chiều hay hai chiều?
->
+> Có hoạt động. bind mount này hoạt động theo 2 chiều 
 
 ```bash
 # Dọn dẹp
